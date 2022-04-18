@@ -1,0 +1,232 @@
+---
+title: "Estadística Descriptiva en R - Lo Básico -"
+author: "Cristian Perdomo"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: TRUE
+    collapsed: FALSE
+    smooth_scroll: FALSE
+    theme: flatly
+    df_print: paged
+    number_sections: TRUE
+---
+
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9SCP7KCG5H"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-9SCP7KCG5H');
+</script>
+</head>
+
+
+
+```{r setup, include=FALSE}
+library(tinytex)
+library(vembedr)
+knitr::opts_chunk$set(echo = TRUE)
+kable.nice = function(x, font.size=15){
+  library(tidyverse)
+  library(kableExtra)
+  kable(x)%>%
+    kable_styling(bootstrap_options="striped", full_width=F, font_size=font.size)
+}
+
+```
+
+______
+
+La estadística descriptiva como su nombre lo indica, busca describir la información que se contiene en una base de datos. Esta descripción debe ser de manera resumida y se puede realizar mediante medidas estadísticas, tablas o gráficas. Hay que tener en cuenta los tipos de datos (variables):
+
+<br>
+
+* <b style = 'color : blue;'>Cualitativos</b>: Nos suministran características o tributos, estado civil (casado o soltero), nivel de educación (Profesional, Maestría, Doctorado), nacionalidad, entre otras. Cabe destacar que en la base de datos podemos tener, por ejemplo, estado civil 1 o 0, pero aunque se identifique como un número estos estan representando una característica 1 = casado, 0 = soltero. Estos se subdividen en:
+
+  * __Ordinales__: Atributos que presentan orden.
+  * __Nominales__: Atributos que no presentan orden.
+
+<br>
+
+* <b style = 'color : blue;'>Cuantitativos</b>: Resultan de hacer mediciones o conteos. Una forma de pensarlo es que pueden ser números reales, (0.01 ,0.02455, 2.3644, 2, 5, 1000). También se dividen en dos:
+
+  * __Discretos__: Resultan de conteos, números enteros (-2, -1 ,0 ,1 ,2, ....).
+  * __Continuos__: Resultan de mediciones, por ejemplo, medidas físicas (peso, temperatura, altura). 
+
+___  
+
+# __Medidas Estadísticas__
+
+Estas son medidas numéricas que se pueden calcular para describir la información de mediciones en una población o una muestra. Recuerde
+
+* Cuando tenemos la población hablamos de _parámetros_.
+* Cuando tenemos una muestra hablamos de _estadísticos_.
+
+$$\textit{En la práctica los estadísticos pueden usarse como estimadores de los parámetros}$$
+Para explicar lo siguiente utilizaré los siguientes datos ficticios, donde cada fila representa a una persona que constesta un cuestionario. Las columnas representan:
+
+* __Helado__: Helado favorito de persona <b style = 'color : blue;'>(Cualitativa - Nominal)</b>.
+* __Estatura__: Estatura de la persona <b style = 'color : blue;'>(Cuantitativa - Continua)</b>.
+* __Peso__: Peso de la persona (Cuantitativa - Continua).
+* __Educación__: Último nivel de educación certificado <b style = 'color : blue;'>(Cualitativa - ordinal) </b>.
+  * 1 = Primaria.
+  * 2 = Secundaria. 
+  * 3 = Universidad.
+  * 4 = Maestría, Doctorado.
+  
+* __Hijos__: Cantidad de hijos <b style = 'color : blue;'>(Cuantitativa - Discreta)</b>.
+
+<br>
+
+```{r Crear datos, eval=T, echo=F}
+set.seed(0)
+datos =data.frame(Helado = sample(rep(c("Fresa", "Coco", "Maracuyá", "Mora", "Chocolate"), rep(5)), size = 200, replace = T))
+datos$Estatura = rnorm(200, 1.75,0.1)
+datos$peso = -100 + 100*datos$Estatura + rnorm(200,0,5)
+datos$Ingresos = rnorm(200, 1700,100)
+#datos$Helado = as.factor(datos$Helado)
+datos$Educacion = sample(c("1", "2", "3", "4"), size = 200, replace = T)
+datos$Educacion = as.factor(datos$Educacion)
+datos$Hijos = floor(runif(200,0,3))
+datos
+```
+
+<br>
+
+___
+
+<b style = 'color : red;'><font size="6">¿Y si quiero utilizar mis datos, pero no los se subir a R ?</font></b>
+
+<br><br>
+
+```{r video, echo=F, eval=T }
+embed_url("https://youtu.be/JAbRMxvyDVM")
+```
+
+____
+
+## __Medidas de tendencia central__
+
+### <b style = 'color : blue;'>Media</b>
+
+Para obtener __la media__ de alguna de nuestras variables __cuantitativas__ lo único que debemos utilizar es la función `mean`. De nuestros datos podemos seleccionar alguna columna con el signo dolar después del nombre del objeto que los contiene $. 
+
+```{r, class.source="bg-primary"}
+mean(datos$Estatura)
+```
+
+De este modo tendría que ir variable por variable obteniendo la media. Pero si necesita obtener las medias para varias de sus variables. Puede utilizar la función `apply` que permite ejecutar una función a través de las filas o las columnas (en este caso las necesitamos por columnas). Para esto tenemos que tener en cuenta dos cosas:
+
+1. los datos deben estar en formato matriz.
+2. Una matriz no puede contener variables cualitativas, por lo que tendremos que seleccionar sólo las columnas que contengan variables cuantitativas (en este caso las colunas 2,3, y 4).
+  2.1 Para resolver esto utilizo `as.matrix(datos[,2:4])`. Esto me selecciona todas las filas de las columnas 2, 3 y 4.
+
+Ahora si, si utilizo `apply`
+
+```{r apply, class.source="bg-primary"}
+apply(as.matrix(datos[,2:4]), 2,mean) 
+```
+
+__El número 2 en la función `apply` representa que queremos obetener las medias por columna__
+
+<br>
+
+Otra opción para esto es utilizar la función `lapply` que nos permita aplicar la función `mean` sin necesidad de transformar nuestros datos a matriz.
+
+```{r, class.source="bg-primary"}
+lapply(datos[,2:4], mean)
+unlist(lapply(datos[,2:4], mean)) # unlist -> para no verlo como lista
+```
+### <b style = 'color : blue;'>Mediana</b>
+
+Para calcular la mediana se utiliza la función `median`
+
+```{r, class.source="bg-primary" }
+median(datos$Estatura)
+apply(as.matrix(datos[,2:4]),2, median)
+unlist(lapply(datos[,2:4], median)) # unlist -> para no verlo como lista
+```
+
+***
+
+
+## __Medidas de disepersión__
+
+### <b style = 'color : blue;'>Varianza y desviación estándar</b>
+
+Para obtener __la varianza__  y __la desviación estándar__ de alguna de nuestras variables __cuantitativas__ lo único que debemos utilizar es la función `var` o `sd` respectivamente. 
+
+```{r, class.source="bg-primary"}
+var(datos$Estatura)
+sd(datos$peso)
+```
+
+del mismo que con en el ejemplo de la media podemos utilizar la función `apply` y `lapply`.
+
+```{r, class.source="bg-primary"}
+apply(as.matrix(datos[,2:4]), 2, sd)
+unlist(lapply(datos[,2:4], sd)) # unlist -> para no verlo como lista
+```
+
+## __Medidas de localización__ 
+
+### <b style = 'color : blue;'>Cuantiles</b>
+
+Para obtener los cuantiles podemos utilizar la función `cuantile`. Si la utilizamos sobre una de nuestras variables cuantitativas nos arrojará por defecto 0% (mínimo), 25% (cuantil 1), 50% (cuantil 2), 75% (cuantil 3) y 100% máximo.
+
+```{r, class.source="bg-primary"}
+quantile(datos$Estatura)
+```
+
+Si queremos obtener uno en especifico lo que debemos hacer es utilizar la opción `probs` dentro de la misma función `quantile`.
+
+
+```{r}
+quantile(datos$Estatura, probs = 0.25) #-> Si solo deceamos uno en específico.
+quantile(datos$Estatura, probs = c(0.25, 0.75)) #-> dos o mas utilizamos c(valor1, valor2,...)
+```
+
+### <b style = 'color : blue;'>Percentiles</b>
+
+Los debemos solicitar a través de la opción `probs`. Por ejemplo, el percentil 20 es el que cumula el 20% de los datos y lo podemos obtener mediante 
+
+```{r}
+quantile(datos$Estatura, probs = 0.20)
+```
+
+
+y de igual modo podemos solicitar varios de estos.
+
+```{r}
+quantile(datos$Estatura, probs = c(0.10, 0.15 ,0.20))
+```
+
+
+**Aquí se debe recalcar que R tiene la opción de 9 algoritmos distintos par al cálculo de los cuantiles, por defecto utiliza el 7. Si desea ver detalles de esto puede consultar [aquí](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/quantile).**
+
+## Adicionales
+
+¿Y si sólo quiero dar una vista rápida de la información?
+
+Puede utilizar la función `summary` que le generará un resumen rápido de la información:
+
+```{r}
+summary(datos)
+```
+
+Note que para la variable __Helado__ nos dice que un caracter por tanto no realiza ninguna acción. Esto lo podemos corregir convirtiendo la variable __Helado__ en factor utilizando la sentencia `as.factor(datos$Helado)`.
+
+```{r}
+datos$Helado = as.factor(datos$Helado)
+summary(datos)
+```
+
+
+
+
+
+
